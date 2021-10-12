@@ -1,0 +1,74 @@
+---
+- name: creating script directory
+  file:
+    path: "{{scriptpath}}"
+    state: directory
+    owner: "{{item.1.user}}"
+    group: "{{item.1.group}}"
+  loop: "{{crond|subelements('inst')}}"
+  loop_control:
+    label:
+      - "{{scriptpath}}"
+      - "{{item.1.user}}"
+  become_user: "{{item.1.user}}"
+
+- name: creating scriptlogs directory
+  file:
+    path: "{{scriptlogpath}}"
+    state: directory
+    owner: "{{item.1.user}}"
+    group: "{{item.1.group}}"
+  loop: "{{crond|subelements('inst')}}"
+  loop_control:
+    label:
+      - "{{scriptlogpath}}"
+      - "{{item.1.user}}"
+  become_user: "{{item.1.user}}"
+
+- name: creating backup directory
+  file:
+    path: "{{item.1.bakpath}}/{{item.1.dbnam}}"
+    state: directory
+    owner: "{{item.1.user}}"
+    group: "{{item.1.group}}"
+  loop: "{{crond|subelements('inst')}}"
+  loop_control:
+    label:
+      - "{{item.1.dbnam}}"
+      - "{{item.1.user}}"
+  when: item.0.jobscript|lower == "backup" and item.1.bakpath is defined
+#  become_user: "{{item.1.user}}"
+
+
+- name: copying scripts to directory
+  template:
+    src: "{{item.0.jobscript}}.sh"
+    dest: "{{scriptpath}}/"
+    owner: "{{item.1.user}}"
+    group: "{{item.1.group}}"
+  loop: "{{crond|subelements('inst')}}"
+  loop_control:
+    label:
+     - "{{item.0.jobscript}}.sh"  
+     - "{{item.1.user}}"
+  become_user: "{{item.1.user}}"
+
+- name: cron template
+  cron:
+    user: "{{item.1.user}}"
+    name: "{{item.0.jobname}}"
+    minute: "{{item.0.min}}"
+    hour: "{{item.0.hr}}"
+    day: "{{item.0.day}}"
+    month: "{{item.0.month}}"
+    weekday: "{{item.0.wd}}"
+    job: "bash {{scriptpath}}/{{item.0.jobscript}}.sh >> {{scriptlogpath}}/{{item.0.jobscript}}_`date +\\%d.\\%m.\\%y`.log 2>&1"
+  loop: "{{crond|subelements('inst')}}"
+  loop_control:
+    label:
+      - "{{item.0.jobname}}"  
+      - "{{item.1.user}}"
+  become: yes
+  
+
+
