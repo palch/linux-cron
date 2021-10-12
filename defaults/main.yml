@@ -1,0 +1,16 @@
+---
+scriptpath: "$HOME/scripts"
+scriptlogpath: "{{scriptpath}}/logs"
+
+crond:
+  - jobname: "<job_name>"
+    jobscript: <job_script_name>
+    min: ""
+    hr: ""
+    day: ""
+    month: ""
+    wd: "*"
+    inst:
+      - user: <user_name>
+        group: <group_name>
+        dbnam: <db_name>
